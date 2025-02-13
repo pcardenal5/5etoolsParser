@@ -94,8 +94,8 @@ class ToolsMonsterParser:
 
 
     def adaptToLegendaryGroup(self, data : dict) -> dict:
-        data['lairActions'] = self.parseLairActions(data.get('lairActions'))
-        data['regionalEffects'] = self.parseLairActions(data.get('regionalEffects'))
+        data['lairActions'] = self.parseLairActions(data, type = 'lairActions')
+        data['regionalEffects'] = self.parseLairActions(data, type = 'regionalEffects')
         data['mythicEncounter'] = data.get('mythicEncounter', '')
 
         return data
@@ -484,12 +484,14 @@ class ToolsMonsterParser:
 
 
     @classmethod
-    def parseLairActions(cls, actions : list | None) -> str:
-        if actions is None:
+    def parseLairActions(cls, data: dict[str, list], type : str) -> str:
+        if data.get(type) is None:
             return ''
-
-        lairActionString = ''
-        for action in actions:
+        if type == 'lairActions':
+            lairActionString = '## Lair Actions\n'
+        elif type == 'regionalEffects':
+            lairActionString = '## Regional Effects\n'
+        for action in data[type]:
             if isinstance(action, str):
                 lairActionString += f'{action}\n'
             elif isinstance(action, dict):
