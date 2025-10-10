@@ -11,7 +11,6 @@ class ToolsMonsterParser:
         self.outputFolder = outputFolder
         if not os.path.exists(self.outputFolder):
             os.mkdir(self.outputFolder)
-            os.mkdir(os.path.join(self.outputFolder, 'Traits'))
 
     def generateMonsterList(self) -> None:
         fileList = os.listdir(self.dataPath)

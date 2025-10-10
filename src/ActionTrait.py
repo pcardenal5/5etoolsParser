@@ -18,10 +18,6 @@ class ActionTrait():
 
         self.mainOutputFolder = outputFolder
 
-        # Group Traits by the first letter
-        self.outputFolder = os.path.join(self.mainOutputFolder, 'Traits', self.name[0].upper())
-        if not os.path.exists(self.outputFolder):
-            os.makedirs(self.outputFolder)
         if self.data.get('text'):
             self.text = self.data['text']
         elif self.data.get('entries') is not None:
@@ -39,7 +35,8 @@ class ActionTrait():
 
         # Make wikilinks only to traits
         if (self.actionTraitType == 'trait') and (not self.name.__contains__('Spellcasting')):
-            self.saveTrait()
+            self.completeText = self.generateText()
+
 
     def parseText(self) -> None:
         if type(self.text) == list:
@@ -98,38 +95,6 @@ class ActionTrait():
         self.attack.replace('•', '- ')
         if self.attack != '':
             self.attack = f'\n{self.attack}\n'
-
-
-    def saveTrait(self) -> None:
-        cleanName = self.name.replace('/', ' per ').replace('\\', ' per ')
-        fileName = f'{cleanName}.md'
-
-        self.completeText = self.generateText()
-        self.completeFilePath = os.path.join(self.outputFolder, fileName)
-        # Check to see if a file with the same name exists.
-        if os.path.exists(self.completeFilePath):
-            # If it does, read it to compare with the text of the current trait.
-            with open(self.completeFilePath, 'r') as inputFile:
-                text = ''.join(inputFile.readlines())
-
-            # TODO: this comparison is too strict and some traits differ from a single, often meaningless, word.
-            # Maybe a dictionary could be done to save the different versions of the trait and save 
-            # only new ones. This could be achieved looping over every different 
-            # version of the trait. Very inefficient but could work. 
-            if self.completeText == text or self.checkIfSave():
-                # It it is the same, change the full text by a hyperlink
-                self.completeText = f'![[{self.completeFilePath.replace('.md','').replace(f'{self.mainOutputFolder}/', '')}|{fileName.replace('.md','')}]]'
-                return 
-
-            # If its not, save contents to new file
-            fileName = f'{cleanName}_{self.monsterName}.md'
-            self.completeFilePath = os.path.join(self.outputFolder, fileName)
-
-        # If the file does not exist, save the contents to a new file
-        with open(self.completeFilePath, 'w') as outputFile:
-            outputFile.write(self.completeText)
-        
-        self.completeText = f'![[{self.completeFilePath.replace('.md','').replace(f'{self.mainOutputFolder}/', '')}|{fileName.replace('.md','')}]]'
 
 
     def generateText(self) -> str:
