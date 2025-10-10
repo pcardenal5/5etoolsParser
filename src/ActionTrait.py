@@ -14,7 +14,8 @@ class ActionTrait():
         self.actionTraitType = actionTraitType
         self.monsterName = monsterName
         self.name = self.data.get('name', 'None')
-        self.name = self.name.replace('[[resting]]', 'rest')
+        self.name = re.sub(r'\[\[rest.+?#.+?\|(.+?)\]\]', r'\1', self.name)
+        self.name = re.sub(r'\[\[(.+?)\]\]', r'\1', self.name)
 
         self.mainOutputFolder = outputFolder
 
@@ -34,7 +35,7 @@ class ActionTrait():
         self.completeText = self.generateText()
 
         # Make wikilinks only to traits
-        if (self.actionTraitType == 'trait') and (not self.name.__contains__('Spellcasting')):
+        if (self.actionTraitType == 'trait') and not self.traitFileExceptions(self.name):
             self.completeText = self.generateText()
 
 
@@ -43,12 +44,33 @@ class ActionTrait():
             self.text = '\n'.join([t for t in self.text if t is not None])
         self.text.replace('•', '- ')
         self.text = self.text.replace('ft.', 'ft')
+        # Before replacint the monster's name by "the creature" we searhc for all existing links.
+        # They are replaced by link0, link1, ..., linkN so as not to replace them with "the creature"
+        #  and create false links. They are later replaced back
+        linksInString = re.findall(r'(\[\[.+?\]\])',self.text)
+        if not linksInString:
+            self._replaceNameByCreature_()
+            return
+        # Get unique elements
+        used = set()
+        unique = [x for x in linksInString if x not in used and (used.add(x) or True)]
+
+        for i in range(len(unique)):
+            self.text = self.text.replace(linksInString[i], f'link{i}')
+
+        self._replaceNameByCreature_()
+        for i in range(len(linksInString)):
+            self.text = self.text.replace(f'link{i}', linksInString[i])
+
+
+
+    def _replaceNameByCreature_(self):
+
         self.text = re.sub(re.escape(self.monsterName), 'the creature', self.text, flags = re.IGNORECASE)
         self.text = re.sub(re.escape(self.monsterName.split(' ')[-1]), 'the creature', self.text, flags = re.IGNORECASE)
-        self.text = re.sub(re.escape(self.monsterName.split(' ')[0]), 'the creature', self.text, flags = re.IGNORECASE)
-        self.text = self.text.replace(' the the ', ' the ').replace('The the ', 'The ')
+        self.text = re.sub(r'([^\w])(?:the )+', r'\1 the ', self.text, flags = re.IGNORECASE)
+        self.text = re.sub(r'\s+', ' ', self.text)
         self.text = '. '.join(i.strip().capitalize() for i in self.text.split('. '))
-
 
 
 
@@ -63,28 +85,33 @@ class ActionTrait():
         if isinstance(actionTrait, str):
             return actionTrait
 
-        actionText = ''        
+        actionText = ''
         if isinstance(actionTrait, dict):
             if not actionTrait.get('items'):
                 return ActionTrait(
-                    actionTrait, 
+                    actionTrait,
                     self.monsterName,
-                    environment = self.environment, 
-                    actionTraitType = self.actionTraitType, 
+                    environment = self.environment,
+                    actionTraitType = self.actionTraitType,
                     outputFolder = self.mainOutputFolder
                 ).completeText
 
 
             for element in actionTrait['items']:
                 if isinstance(element, dict):
-                    try:
-                        actionText += f'**{element['name']}** : {element['entry']}'
-                    except Exception as e:
-                        actionText += f'**{element['name']}** : {element['entries']}'
+                    if element.get('entry'):
+                        key = 'entry'
+                    else:
+                        key = 'entries'
+                    actionText += f'\n- **{element['name'].title()}** : {self.parseActionEntryElement(element[key])}\n'
+
                 if isinstance(element, str):
-                    actionText += f'{element}'
+                    actionText += f'\n{element}\n'
 
             return actionText
+
+        if isinstance(actionTrait, list):
+            return ''.join(actionTrait)
 
         raise TypeError(f'ActionEntryElement not supported({type(actionTrait)}): {actionTrait}')
 
@@ -97,6 +124,7 @@ class ActionTrait():
             self.attack = f'\n{self.attack}\n'
 
 
+
     def generateText(self) -> str:
         if self.name.lower().__contains__('spellcasting'):
             return self.parseSpellcasting()
@@ -105,11 +133,12 @@ class ActionTrait():
 
     def checkIfSave(self) -> bool:
         '''
-        Checks whether or not to try to save the trait. The main criteria is 
-        cheching to see if the actionTraitType is `'trait'`, but some are
-        hard coded.
+        Checks whether or not to try to save the trait in a new
+        file if another one with the same name already exists. 
+        The main criteria is cheching to see if the actionTraitType
+        is `'trait'`, but some are hard coded.
 
-        This list is done manually by checking after one iteration has been done 
+        This list is done manually
         '''
         exceptionList = [
             'Aggressive',
@@ -191,8 +220,31 @@ class ActionTrait():
     def parseSpells(data : dict[str, dict]) -> str:
         s = ''
         for key, value in data.items():
-            s += f'- {key}' 
+            s += f'- {key}'
             if value.get('slots'):
-                s += f' ({value['slots']} slots)' 
+                s += f' ({value['slots']} slots)'
             s += f': {', '.join(value['spells'])}.\n'
-        return s                
+        return s
+
+
+    @staticmethod
+    def traitFileExceptions(s0 : str) -> bool:
+        '''
+        Filters what kind of action traits will not be saved in separate files
+        but instead directly on the monster.md file
+        '''
+        s = s0.lower()
+        b = s.__contains__('spellcasting')
+        b = b or s.__contains__('special equipment')
+        b = b or s.__contains__('change shape')
+        b = b or s.__contains__('shapechanger')
+        b = b or s.__contains__('shape-shift')
+        b = b or s.__contains__('charge')
+        b = b or s.__contains__('false appearance')
+        b = b or s.__contains__('hold breath')
+        b = b or s.__contains__('regeneration')
+        b = b or s.__contains__('roleplaying information')
+        b = b or s.__contains__('sneak attack')
+        b = b or s.__contains__('tunneler')
+        b = b or s == 'illumination'
+        return b
