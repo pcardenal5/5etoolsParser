@@ -7,7 +7,7 @@ from src.LegendaryGroup import LegendaryGroup
 import re
 from tqdm import tqdm
 
-class ToolsMonsterParser:
+class BestiaryParser:
     def __init__(self, dataPath : str, outputFolder : str) -> None:
         self.dataPath = dataPath
         self.outputFolder = outputFolder
@@ -576,5 +576,5 @@ class ToolsMonsterParser:
 
 if __name__ == '__main__':
     s0 = "Pike has {@quickref Advantage and Disadvantage|PHB|2|0|advantage} on Intelligence, Wisdom, and Charisma {@quickref saving throws|PHB|2|1} against magic."
-    tmp = ToolsMonsterParser.getLinkSection(s0,r'\{@quickref (.+?)\}')
+    tmp = BestiaryParser.getLinkSection(s0,r'\{@quickref (.+?)\}')
     print(s0, '\n', tmp)

@@ -1,8 +1,7 @@
 from src.DataService import DataService
-from src.ModeEnum import ModeEnum
+import os
 
-
-dataPath = './5etools-v2.7.0/data/bestiary'
+mainDataPath = './5etools-v2.13.0/data'
 outputFolder = './5etools'
-ds = DataService(dataPath, outputFolder = outputFolder, mode = ModeEnum.TOOLS)
+ds = DataService(os.path.join(mainDataPath, 'bestiary'), outputFolder = outputFolder)
 ds.generateMonsterList()

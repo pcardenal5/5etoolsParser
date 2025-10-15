@@ -127,14 +127,14 @@ class Monster:
 
 
     @staticmethod
-    def parseSpeed(data : dict) -> str:
+    def parseSpeed(data : dict[str,str]) -> str:
         if data.get('speed'):
             return f'**Speed**: {data.get('speed')}\n'
         return ''
 
 
     @staticmethod
-    def parseSkill(data : dict) -> str:
+    def parseSkill(data : dict[str,str]) -> str:
         if data.get('skill'):
             return f'**Skills**: {data.get('skill')}\n'
         return ''
@@ -142,7 +142,7 @@ class Monster:
 
 
     @staticmethod
-    def parseSenses(data : dict) -> str:
+    def parseSenses(data : dict[str,str]) -> str:
         if data.get('senses'):
             return f'**Senses**: {data.get('senses')}\n'
         return ''
@@ -150,7 +150,7 @@ class Monster:
 
 
     @staticmethod
-    def parseLanguages(data : dict) -> str:
+    def parseLanguages(data : dict[str,str]) -> str:
         if data.get('languages'):
             return f'**Languages**: {data.get('languages')}\n'
         return ''

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ac294333aca1f506c248b40f2cd088443030a56b9706712fb10ae7e0e09c878e"
+            "sha256": "d47deb3b9d535ee4c82431d0370ab51d02a487df0c272d8bd2d6171cb870b544"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -101,14 +101,14 @@
             "markers": "python_version >= '3.7'",
             "version": "==4.67.1"
         },
-        "xmltodict": {
+        "typing-extensions": {
             "hashes": [
-                "sha256:201e7c28bb210e374999d1dde6382923ab0ed1a8a5faeece48ab525b7810a553",
-                "sha256:20cc7d723ed729276e808f26fb6b3599f786cbc37e06c65e192ba77c40f20aac"
+                "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466",
+                "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.6'",
-            "version": "==0.14.2"
+            "markers": "python_version >= '3.9'",
+            "version": "==4.15.0"
         }
     },
     "develop": {}
