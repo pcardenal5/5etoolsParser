@@ -1,7 +1,6 @@
 from src.DataService import DataService
-import os
 
-mainDataPath = './5etools-v2.13.0/data'
+mainDataPath = './5etools-v2.24.3/data'
 outputFolder = './5etools'
-ds = DataService(os.path.join(mainDataPath, 'bestiary'), outputFolder = outputFolder)
+ds = DataService(mainDataPath, outputFolder)
 ds.generateMonsterList()
