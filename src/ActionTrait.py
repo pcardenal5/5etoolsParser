@@ -1,5 +1,4 @@
 from jinja2 import Environment
-import os
 import re
 
 class ActionTrait():
@@ -34,10 +33,6 @@ class ActionTrait():
 
         self.completeText = self.generateText()
 
-        # Make wikilinks only to traits
-        if (self.actionTraitType == 'trait') and not self.traitFileExceptions(self.name):
-            self.completeText = self.generateText()
-
 
     def parseText(self) -> None:
         if type(self.text) == list:
@@ -49,7 +44,6 @@ class ActionTrait():
         #  and create false links. They are later replaced back
         linksInString = re.findall(r'(\[\[.+?\]\])',self.text)
         if not linksInString:
-            self._replaceNameByCreature_()
             return
         # Get unique elements
         used = set()
@@ -57,20 +51,9 @@ class ActionTrait():
 
         for i in range(len(unique)):
             self.text = self.text.replace(linksInString[i], f'link{i}')
-
-        self._replaceNameByCreature_()
         for i in range(len(linksInString)):
             self.text = self.text.replace(f'link{i}', linksInString[i])
 
-
-
-    def _replaceNameByCreature_(self):
-
-        self.text = re.sub(re.escape(self.monsterName), 'the creature', self.text, flags = re.IGNORECASE)
-        self.text = re.sub(re.escape(self.monsterName.split(' ')[-1]), 'the creature', self.text, flags = re.IGNORECASE)
-        self.text = re.sub(r'([^\w])(?:the )+', r'\1 the ', self.text, flags = re.IGNORECASE)
-        self.text = re.sub(r'\s+', ' ', self.text)
-        self.text = '. '.join(i.strip().capitalize() for i in self.text.split('. '))
 
 
 
@@ -131,34 +114,6 @@ class ActionTrait():
         return self.template.render(self.__dict__)
 
 
-    def checkIfSave(self) -> bool:
-        '''
-        Checks whether or not to try to save the trait in a new
-        file if another one with the same name already exists. 
-        The main criteria is cheching to see if the actionTraitType
-        is `'trait'`, but some are hard coded.
-
-        This list is done manually
-        '''
-        exceptionList = [
-            'Aggressive',
-            'Legendary resistance',
-            'Magic resistance',
-            'Pack tactics',
-            'Swarm',
-            'Incorporeal movement',
-            'Evasion',
-            'Keen' # Captures all keen eye, smell, etc.
-        ]
-
-        check = lambda s: (self.name.lower().startswith(s))
-
-        b = False
-        for exception in exceptionList:
-            b = b or check(exception.lower())
-
-        return b
-
 
     def parseSpellcasting(self) -> str:
         if not self.data:
@@ -184,7 +139,7 @@ class ActionTrait():
 
 
     @staticmethod
-    def parseDailySpells(data: dict[str, list[str]]) -> str:
+    def parseDailySpells(data: dict[str, list[str|dict[str,str]]]) -> str:
         ds = ''
         for key, value in data.items():
             ds += f'- {key.replace('e', ' per day each')}: '
@@ -226,25 +181,3 @@ class ActionTrait():
             s += f': {', '.join(value['spells'])}.\n'
         return s
 
-
-    @staticmethod
-    def traitFileExceptions(s0 : str) -> bool:
-        '''
-        Filters what kind of action traits will not be saved in separate files
-        but instead directly on the monster.md file
-        '''
-        s = s0.lower()
-        b = s.__contains__('spellcasting')
-        b = b or s.__contains__('special equipment')
-        b = b or s.__contains__('change shape')
-        b = b or s.__contains__('shapechanger')
-        b = b or s.__contains__('shape-shift')
-        b = b or s.__contains__('charge')
-        b = b or s.__contains__('false appearance')
-        b = b or s.__contains__('hold breath')
-        b = b or s.__contains__('regeneration')
-        b = b or s.__contains__('roleplaying information')
-        b = b or s.__contains__('sneak attack')
-        b = b or s.__contains__('tunneler')
-        b = b or s == 'illumination'
-        return b

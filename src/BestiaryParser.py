@@ -1,18 +1,18 @@
 import os
 import json
 import sys
-sys.path.append('.')
-from src.Monster import Monster
-from src.LegendaryGroup import LegendaryGroup
 import re
 from tqdm import tqdm
+sys.path.append('.')
 
-class BestiaryParser:
+from src.Monster import Monster
+from src.Parser import Parser
+from src.LegendaryGroup import LegendaryGroup
+
+
+class BestiaryParser(Parser):
     def __init__(self, dataPath : str, outputFolder : str) -> None:
-        self.dataPath = dataPath
-        self.outputFolder = outputFolder
-        if not os.path.exists(self.outputFolder):
-            os.mkdir(self.outputFolder)
+        super().__init__(dataPath, outputFolder)
 
     def generateMonsterList(self) -> None:
         fileList = os.listdir(self.dataPath)
@@ -33,7 +33,7 @@ class BestiaryParser:
             # TODO: consider "Edge" case
             if monster.get('_copy') is not None:
                 continue
-            monsterData = self.adaptToMonster(self.sanitizeData(monster)) # type:ignore
+            monsterData = self.sanitizeData(monster) # type:ignore
             mon = Monster(data = monsterData, source = monsterData['source'], outputFolder = self.outputFolder)
 
             # Monster name is NOT unique across monster manuals, first check if it exists
@@ -65,35 +65,6 @@ class BestiaryParser:
 
 
 
-    def adaptToMonster(self, data: dict)-> dict:
-        # Here we adapt the data from the json to the
-        # format the Monster class expects
-        # Thus, we only change the values that actually
-        # need to change
-
-        if data['name'].lower().__contains__('adult gold') and data['name'].lower().endswith('dragon'):
-            pass
-        data['size'] = ','.join([self.parseSize(i) for i in data.get('size', [])])
-        data['alias'] = ','.join([i for i in data.get('alias', [])])
-        data['type'], data['additionalType'] = self.parseTypes(data.get('type'))
-        data['alignment'] = self.parseAlignment(data.get('alignment'))
-        data['hp'] = self.parseHP(data.get('hp'))
-        data['save'] = self.parseSave(data.get('save'))
-        data['resist'] = self.parseConditions(data.get('resist'), 'resist')
-        data['conditionImmune'] = self.parseConditions(data.get('conditionImmune'), 'conditionImmune')
-        data['immune'] = self.parseConditions(data.get('immune'), 'immune')
-        data['vulnerable'] = self.parseConditions(data.get('vulnerable'), 'vulnerable')
-        data['cr'], data['lairCr'] = self.parseCR(data.get('cr'))
-        data['ac'] = self.parseAC(data.get('ac'))
-        data['senses'] = self.parseSenses(data.get('senses'))
-        data['speed'] = self.parseSpeed(data.get('speed'))
-        data['skill'] = self.parseSkills(data.get('skill'))
-        data['languages'] = self.parseLanguages(data.get('languages'))
-        data['trait'] = self.parseTraits(data)
-
-        return data
-
-
     def adaptToLegendaryGroup(self, data : dict) -> dict:
         data['lairActions'] = self.parseLairActions(data, legendaryType = 'lairActions')
         data['regionalEffects'] = self.parseLairActions(data, legendaryType = 'regionalEffects')
@@ -101,60 +72,6 @@ class BestiaryParser:
 
         return data
 
-
-    @staticmethod
-    def parseSize(size: list|None) -> str:
-        if size is None:
-            return 'None'
-        if len(size) > 1:
-            raise ValueError(f'Size List too long: {size}')
-        match size[0]:
-            case None:
-                return 'None'
-            case 'T':
-                return 'Tiny'
-            case 'S':
-                return 'Small'
-            case 'M':
-                return 'Medium'
-            case 'L':
-                return 'Large'
-            case 'H':
-                return 'Huge'
-            case 'G':
-                return 'Gargantuan'
-            case _:
-                raise LookupError(f'Size not supported: {size}')
-
-
-    @classmethod
-    def parseTypes(cls, type: str | dict | None) -> tuple[str,str]:
-        if type is None:
-            return 'None', 'None'
-
-        subtype = 'None'
-        if isinstance(type, str):
-            return f'"[[{type}]]"', subtype
-        if isinstance(type, dict):
-            if type.get('tags') is not None:
-                tags = type['tags']
-                for tag in tags:
-                    if isinstance(tag, str):
-                        subtype = tag
-                    elif isinstance(tag, list):
-                        subtype = ', '.join(tag)
-                    elif isinstance(tag, dict):
-                        subtype = f'{tag.get('prefix')} {tag.get('tag')}'.strip()
-                    else:
-                        subtype = ''
-                        raise ValueError(f'Type tags has not been considered: {tag}')
-            elif type.get('swarmSize') is not None:
-                subtype = ','.join([cls.parseSize(i) for i in  type['swarmSize']])
-            else:
-                subtype = 'None'
-
-
-            return f'"[[{type['type']}]]"', subtype
 
 
     @staticmethod
